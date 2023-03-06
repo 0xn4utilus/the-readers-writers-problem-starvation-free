@@ -93,15 +93,50 @@ read_count = 0;
 readers_mutex = 1;
 ```
 
-The `entry_mutex` semaphore which is used to gives equal chance to both reader and writer. It solves the problem of starvation such that when reader/writer tries to acquire `shared_resources_mutex` it has to first acquire `entry_mutex` and only the process which tried to acquire `shared_resources_mutex` first will be given lock over `entry_mutex`. In this way no process will suffer from starvation.
+### Semaphore using waiting_queue
+
+```cpp
+class Semaphore {
+   public:
+    int value = 1;
+
+    Queue<processes> waiting_processes;        // queue of processes containing process information
+
+    Semaphore(int x) {                        // constructor
+        this.value = x;
+    }
+}
+
+wait(Semaphore s, process pid) {
+    s.value --;                               // decrement value
+
+    if(s.value < 0){
+        s.waiting_queue.push(pid);
+        sleep(pid);                           // let the process sleep
+    }
+
+}
+
+signal(Semaphore s) {
+    s.value++;                                // increment value
+    if(s.value <= 0){
+        process pid = s.waiting_queue.pop();  // get the front pid from waiting_queue and remove it from queue
+        wakeup(pid);
+    }
+
+}
+
+```
+
+The `entry_mutex` semaphore which is used to gives equal chance to both reader and writer. It solves the problem of starvation such that when reader/writer tries to acquire `shared_resources_mutex` it has to first acquire `entry_mutex` and only the process which tried to acquire `shared_resources_mutex` first will be given lock over `entry_mutex` which is the front element of `waiting_queue`. In this way no process will suffer from starvation.
 
 ### Starvefree Implementation - `Writer`
 
 ```cpp
 writer() {
     do {
-        wait(entery_mutex);           // acquire lock over entry mutex
-        wait(shared_resources_lock);  // acquires lock over shared resources
+        wait(entery_mutex, pid);           // acquire lock over entry mutex
+        wait(shared_resources_lock, pid);  // acquires lock over shared resources
         signal(entry_mutex);          // releases lock over entry mutex
 
         //
@@ -119,13 +154,13 @@ writer() {
 reader() {
     read_count = 0;                        // initialize read_count to 0
     do {
-        wait(entry_mutex);                 // acquire lock over entry mutex
-        wait(readers_mutex);               // acquire lock over readers mutex
+        wait(entry_mutex, pid);            // acquire lock over entry mutex
+        wait(readers_mutex, pid);          // acquire lock over readers mutex
         signal(entry_mutex);               // release lock over entry mutex
         read_count++;                      // increment readers count
         if (read_count == 1) {             // initial reader
 
-            wait(shared_resources_lock);   // acquire lock over shared resources
+            wait(shared_resources_lock, pid);   // acquire lock over shared resources
         }
 
         signal(readers_mutex);             // releases lock over readers mutex
@@ -134,7 +169,7 @@ reader() {
         //  Critical Section  -- do reading over shared resources
         //
 
-        wait(readers_mutex);                // acquires lock over readers mutex
+        wait(readers_mutex, pid);                // acquires lock over readers mutex
         read_count--;                       // decrements readers count
         if (read_count == 0) {              // last reader
             signal(shared_resources_lock);  // releases lock over shared resources
