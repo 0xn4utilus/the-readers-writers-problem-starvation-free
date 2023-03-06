@@ -1,3 +1,8 @@
+// ....... initialization .......
+// entry_mutex =1;
+// shared_resources_lock = 1;
+// read_count = 0;
+// readers_mutex = 1;
 
 reader() {
     read_count = 0;                       // initialize read_count to 0
