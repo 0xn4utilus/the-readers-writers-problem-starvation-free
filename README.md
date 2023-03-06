@@ -95,7 +95,7 @@ readers_mutex = 1;
 
 The `entry_mutex` semaphore which is used to gives equal chance to both reader and writer. It solves the problem of starvation such that when reader/writer tries to acquire `shared_resources_mutex` it has to first acquire `entry_mutex` and only the process which tried to acquire `shared_resources_mutex` first will be given lock over `entry_mutex`. In this way no process will suffer from starvation.
 
-### Classical Implementation - `Writer`
+### Starvefree Implementation - `Writer`
 
 ```cpp
 writer() {
@@ -113,7 +113,7 @@ writer() {
 }
 ```
 
-### Classical Implementation - `Reader`
+### Starvefree Implementation - `Reader`
 
 ```cpp
 reader() {
