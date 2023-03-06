@@ -1,5 +1,6 @@
 
 reader() {
+    read_count = 0;                       // initialize read_count to 0
     do {
         wait(mutex);                      // acquire lock over mutex
         read_count++;                     // increment readers count
@@ -26,12 +27,12 @@ reader() {
 
 writer() {
     do {
-        wait(mutex);  // acquires lock over mutex
+        wait(shared_resources_lock);  // acquires lock over shared resources mutex
 
         //
         //       Critical Section
         //
 
-        signal(mutex);  // releases lock over mutex
+        signal(shared_resources_lock);  // releases lock over shared resources mutex
     } while (true);
 }
